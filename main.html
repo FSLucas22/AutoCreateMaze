@@ -1,0 +1,121 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+    <head>
+        <title>
+            Drawing
+        </title>
+    </head>
+    <body>
+        <script src="importation.js"></script>
+        <script src="constants.js"></script>
+        <script src="mazeInfo.js"></script>
+        <script src="drawthing.js"></script>
+        <script src="mazeDrawObject.js"></script>
+        <script>
+
+            function simpleMazeSpaceFactory(canvas, width, height, startPoint, endPoint,
+                                            entryDirection=DEFAULT_ENTRY_DIRECTION,
+                                            leaveDirection=DEFAULT_LEAVE_DIRECTION, mazePosition=DEFAULT_MAZE_POSITION,
+                                            unityLength=DEFAULT_UNITY_LENGTH, unityBgColor, unityLineColor,
+                                            unityLineWidth)
+            {
+                let mazeInfo = improvedMazeInfoFactory(width, height, startPoint, endPoint, entryDirection, leaveDirection, mazePosition);
+                console.log(mazeInfo);
+                let mazeUnityList = getSimpleUnityList(mazeInfo, unityLength, unityBgColor, unityLineColor,
+                                                        unityLineWidth);
+                //setDrawtoUnitys(canvas, mazeUnityList, drawMethodSetter, startPoint, endPoint, entryDirection, leaveDirection);
+                let mazeSpace = new MazeSpace(canvas, mazeUnityList, mazeInfo);
+                console.log(mazeSpace);
+                return mazeSpace;
+            }
+
+            function getSimpleUnityList(mazeInfo, unityLength=DEFAULT_UNITY_LENGTH, unityBgColor,
+                                        unityLineColor, unityLineWidth=DEFAULT_UNITY_LINE_WIDTH)
+            {
+                let unityList = [];
+                for (let x = 0; x < mazeInfo.width; x++) {
+                    let unityRow = [];
+                    for (let y = 0; y < mazeInfo.height; y++) {
+                        let unityCoord = [x * unityLength + mazeInfo.x + unityLineWidth, y * unityLength + mazeInfo.y + unityLineWidth];
+                        //console.log(unityCoord)
+                        let info = mazeInfo.maze.node([x, y]);
+                        let unity = new spaceUnity(unityCoord, info, unityLength, unityBgColor, unityLineColor, unityLineWidth);
+                        unityRow.push(unity);
+                    }
+                    unityList.push(unityRow);
+                }
+                return unityList;
+            }
+
+            function simpleSetDrawToUnitys(maze, drawMethodSetter) {
+                let stX = startPoint[0];
+                let stY = startPoint[1];
+                let edX = endPoint[0];
+                let edY = endPoint[1];
+                drawMethodSetter(maze.unities[stX][stY], maze.canvas, maze.info.entryDirection);
+                drawMethodSetter(maze.unities[edX][edY], maze.canvas, maze.info.leaveDirection);
+                for (let x = 0; x < maze.unities.length ; x++) {
+                    for (let y = 0; y < maze.unities[x].length; y++) {
+                        if (equalArray([x, y], startPoint) || equalArray([x, y], endPoint)) {
+                            //console.log('reached');
+                            continue;
+                        }
+                        drawMethodSetter(maze.unities[x][y], maze.canvas)
+                    }
+                }
+            }
+
+            function simpleMazeFactory(width, height, startPoint, endPoint, entryDirection, leaveDirection, mazePosition,
+                                       unityLength=DEFAULT_UNITY_LENGTH, unityBgColor, unityLineColor, unityLineWidth)
+            {
+                let canvas = canvasFactory();
+                backGround(canvas, CANVAS_BG_COLOR);
+                let mazeSpace = simpleMazeSpaceFactory(canvas, width, height, startPoint, endPoint, entryDirection, leaveDirection,
+                                                       mazePosition, unityLength, unityBgColor, unityLineColor, unityLineWidth);
+                return mazeSpace;
+
+            }
+
+            function improvedSetDrawToUnitys(maze, drawMethodSetter)
+            {
+                drawBorder(maze);
+                for (let x = 0; x < maze.info.width; x++) {
+                    let ignore = '';
+                    if (x == maze.info.width - 1)
+                    {
+                        ignore = 'right';
+                    }
+                    for (let y = 0; y < maze.info.height; y++) {
+                        if (y == maze.info.width - 1) {
+                            ignore = (ignore == 'right')? 'all' : 'bottom';
+                        }
+                        let unity = maze.unities[x][y];
+                        drawMethodSetter(unity, maze.canvas);
+                    }
+                }
+            }
+
+            function drawMaze(maze, bgColor)
+            {
+                drawRect(maze.canvas, [maze.x + maze.borderWidth, maze.y + maze.borderWidth], maze.trueWidth, maze.trueHeight,
+                        maze.borderWidth, bgColor);
+                for (let x = 0; x < maze.info.width; x++) {
+                    for (let y = 0; y < maze.info.height; y++) {
+                        let unity = maze.unities[x][y];
+                        unity.draw();
+                    }
+                }
+            }
+
+            let startPoint = [0, 0];
+            let mazeWidth = 100;
+            let mazeHeight = 100;
+            let endPoint = [mazeWidth - 1, mazeHeight - 1];
+            let maze = simpleMazeFactory(mazeWidth, mazeHeight, startPoint, endPoint);
+            let canvas = maze.canvas;
+            simpleSetDrawToUnitys(maze, drawMethodFactory);
+            drawMaze(maze, 'green');
+        </script>
+    </body>
+</html>
